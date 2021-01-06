@@ -1,14 +1,39 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Row, Col, Card, Form } from 'react-bootstrap';
 import { AuthContext } from '../../App';
 import api from '../../api';
-
+import { useSocket } from '../../App';
 // props = post
 function DetailPost({ imageUrl, _id, comments, addComment }) {
   const { user } = useContext(AuthContext);
   const [content, setContent] = useState('');
+  const [otherTyping, setOtherTyping] = useState('');
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (_id) {
+      socket.emit('join-room-post', { postId: _id });
+      socket.on('user-typing', data => {
+        const { user } = data;
+        setOtherTyping(user);
+      })
+      socket.on('new-comment-added', data => {
+        addComment(data);
+        setOtherTyping('');
+      });
+      socket.on('notification-new-comment', data => {
+        if (data.createdBy !== user._id) {
+          addComment(data);
+          setOtherTyping('');
+        }
+      })
+    }
+  }, [_id, socket])
 
   const onChangeContent = (event) => {
+    if (!content) {
+      socket.emit('someone-typing', { user: user.username, postId: _id });
+    }
     setContent(event.target.value);
   }
 
@@ -23,7 +48,9 @@ function DetailPost({ imageUrl, _id, comments, addComment }) {
       }
     });
     if (res.success) {
-      addComment({ createdBy: { username: user.username }, content });
+      const newComment = { createdBy: { username: user.username }, content, postId: _id }
+      addComment(newComment);
+      // socket.emit('new-comment', newComment);
       setContent('');
     }
   };
@@ -44,6 +71,7 @@ function DetailPost({ imageUrl, _id, comments, addComment }) {
               </div>
             ))}
           </div>
+          { otherTyping && <div>{otherTyping} đang nhập bình luận</div> }
           <div className="form-comment">
             {
               user && (

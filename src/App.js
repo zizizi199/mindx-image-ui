@@ -1,5 +1,6 @@
 import { Switch, Route } from 'react-router-dom';
-import { useState, createContext, useEffect, useRef } from 'react';
+import { useState, createContext, useEffect, useRef, useContext } from 'react';
+import { io } from 'socket.io-client';
 import Home from './pages/Home/Home';
 import Login from './pages/Auth/Login';
 import SignUp from './pages/Auth/Signup';
@@ -12,11 +13,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 export const AuthContext = createContext();
+export const SocketContext = createContext()
 
+export function useSocket() {
+  return useContext(SocketContext);
+}
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [firstRender, setFirstRender] = useState(true);
+  const socket = useRef(null)
 
   const verifyAuth = async () => {
     setLoading(true)
@@ -34,7 +40,7 @@ function App() {
     } catch (err) {
       setLoading(false);
     }
-    
+
   }
 
   useEffect(() => {
@@ -44,6 +50,14 @@ function App() {
       verifyAuth();
     }
     setFirstRender(false);
+  }, [])
+
+  useEffect(() => {
+    try {
+      socket.current = io('http://localhost:8081');
+    } catch (err) {
+      console.log('socket err', err);
+    }
   }, [])
 
   const login = ({ user, token }) => {
@@ -66,28 +80,30 @@ function App() {
 
   return (
     <AuthContext.Provider value={authValue}>
-      <div className="App">
-        <Switch>
-          <Route path='/' exact>
-            <Home />
-          </Route>
-          <Route path='/login' exact>
-            <Login />
-          </Route>
-          <Route path='/signup' exact>
-            <SignUp />
-          </Route>
-          <Route path='/upload' exact>
-            <CreatePost />
-          </Route>
-          <Route path='/posts/:id' exact>
-            <PostDetail />
-          </Route>
-          <Route path='*'>
-            <NotFound />
-          </Route>
-        </Switch>
-      </div>
+      <SocketContext.Provider value={socket.current}>
+        <div className="App">
+          <Switch>
+            <Route path='/' exact>
+              <Home />
+            </Route>
+            <Route path='/login' exact>
+              <Login />
+            </Route>
+            <Route path='/signup' exact>
+              <SignUp />
+            </Route>
+            <Route path='/upload' exact>
+              <CreatePost />
+            </Route>
+            <Route path='/posts/:id' exact>
+              <PostDetail />
+            </Route>
+            <Route path='*'>
+              <NotFound />
+            </Route>
+          </Switch>
+        </div>
+      </SocketContext.Provider>
     </AuthContext.Provider>
   );
 }
