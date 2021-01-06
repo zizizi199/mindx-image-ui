@@ -1,0 +1,9 @@
+.has-picture .uploadIcon,
+.has-picture p,
+.has-picture .chooseFileButton  {
+  display: none;
+}
+
+.has-picture .uploadPictureContainer {
+  width: 100%;
+}

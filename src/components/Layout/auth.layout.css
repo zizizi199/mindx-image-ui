@@ -1,0 +1,17 @@
+  
+.AuthLayout {
+    height: 100vh;
+    background-color: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .Login, .Signup {
+    min-width: 400px;
+  }
+  
+  .form-wrapper {
+    background-color: #ffffff;
+    padding: 24px;
+  }
